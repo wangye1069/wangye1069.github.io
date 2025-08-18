@@ -1,0 +1,105 @@
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport">
+<meta content="yes" name="apple-mobile-web-app-capable">
+<meta content="yes" name="apple-touch-fullscreen">
+<meta content="black" name="apple-mobile-web-app-status-bar-style">
+<meta content="320" name="MobileOptimized">
+<title>网页</title>
+<style>
+.loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid;
+  border-color: #007bff #007bff transparent;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  border: none;
+}
+</style>
+</head>
+<body>
+<div class="loader"></div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const encodedParam = urlParams.get('c');
+
+if (encodedParam) {
+    try {
+        const trueUrl = atob(encodedParam);
+        if (trueUrl.includes('http')) {
+            const loader = document.querySelector('.loader');
+            setTimeout(() => {
+                loader.style.display = 'none';
+                const iframe = document.createElement('iframe');
+                iframe.className = 'content';
+                iframe.src = trueUrl;
+                iframe.setAttribute('frameborder', '0');
+                iframe.setAttribute('scrolling', 'no');
+                iframe.onload = () => {
+                    bindMouseWheel(iframe);
+                };
+                document.body.appendChild(iframe);
+            }, 1000);
+        } else {
+            console.log('无效URL');
+        }
+    } catch (e) {
+        console.error('URL解码失败:', e);
+    }
+}
+
+function bindMouseWheel(iframe) {
+    try {
+        const doc = iframe.contentWindow.document;
+        const isFirefox = navigator.userAgent.includes('Firefox');
+        
+        function handleMouseWheel(e) {
+            e.preventDefault();
+            const up = isFirefox ? e.detail < 0 : e.wheelDelta > 0;
+            const scrollAmount = up ? -80 : 80;
+            doc.documentElement.scrollTop += scrollAmount;
+            doc.body.scrollTop += scrollAmount;
+        }
+
+        if (isFirefox) {
+            doc.addEventListener('DOMMouseScroll', handleMouseWheel, false);
+        } else {
+            doc.onmousewheel = handleMouseWheel;
+        }
+    } catch (e) {
+        console.error('跨域访问iframe失败:', e);
+    }
+}
+</script>
+</body>
+</html>
