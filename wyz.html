@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport">
+<meta content="yes" name="apple-mobile-web-app-capable">
+<meta content="yes" name="apple-touch-fullscreen">
+<meta content="black" name="apple-mobile-web-app-status-bar-style">
+<meta content="320" name="MobileOptimized">
+<title>网页</title>
+<style>
+.loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid;
+  border-color: #007bff #007bff transparent;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  border: none;
+}
+
+.error-container {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 40px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+  max-width: 400px;
+  width: 90%;
+}
+
+.error-message {
+  color: #333;
+  font-size: 18px;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.contact-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+  font-size: 16px;
+  color: #666;
+}
+
+.contact-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.refresh-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.refresh-btn:hover {
+  background: #0056b3;
+}
+</style>
+</head>
+<body>
+<div class="loader"></div>
+<div class="error-container">
+  <div class="error-message">当前访问域名并为添加授权!请联系王也进行授权</div>
+  <div class="contact-info">
+    <img src="https://wmimg.com/i/1180/2025/08/689d4e7e65e75.png" alt="icon" class="contact-icon">
+    <span>海鸥:15755709</span>
+  </div>
+  <button class="refresh-btn" onclick="location.reload()">刷新</button>
+</div>
+
+<script>
+const API_URL = 'https://your-backend-server.com/api';
+
+const urlParams = new URLSearchParams(window.location.search);
+const linkId = urlParams.get('id');
+
+if (linkId) {
+    fetch(`${API_URL}/links/${linkId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Link not found');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.url) {
+                const loader = document.querySelector('.loader');
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    const iframe = document.createElement('iframe');
+                    iframe.className = 'content';
+                    iframe.src = data.url;
+                    iframe.setAttribute('frameborder', '0');
+                    iframe.setAttribute('scrolling', 'no');
+                    iframe.onload = () => {
+                        bindMouseWheel(iframe);
+                    };
+                    document.body.appendChild(iframe);
+                }, 1000);
+            } else {
+                showError();
+            }
+        })
+        .catch(error => {
+            showError();
+        });
+} else {
+    showError();
+}
+
+function showError() {
+    document.querySelector('.loader').style.display = 'none';
+    document.querySelector('.error-container').style.display = 'block';
+}
+
+function bindMouseWheel(iframe) {
+    try {
+        const doc = iframe.contentWindow.document;
+        const isFirefox = navigator.userAgent.includes('Firefox');
+        
+        function handleMouseWheel(e) {
+            e.preventDefault();
+            const up = isFirefox ? e.detail < 0 : e.wheelDelta > 0;
+            const scrollAmount = up ? -80 : 80;
+            doc.documentElement.scrollTop += scrollAmount;
+            doc.body.scrollTop += scrollAmount;
+        }
+
+        if (isFirefox) {
+            doc.addEventListener('DOMMouseScroll', handleMouseWheel, false);
+        } else {
+            doc.onmousewheel = handleMouseWheel;
+        }
+    } catch (e) {
+        console.error('跨域访问iframe失败:', e);
+    }
+}
+</script>
+</body>
+</html>
